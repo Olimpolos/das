@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Editable - Especificaciones Turnero EMCALI</title>
+    <title>Dashboard Cloud - Especificaciones Turnero EMCALI</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         * {
@@ -63,6 +63,7 @@
             display: flex;
             gap: 0.5rem;
             flex-wrap: wrap;
+            align-items: center;
         }
 
         header {
@@ -187,12 +188,6 @@
             margin-bottom: 2rem;
             position: relative;
             height: 400px;
-        }
-
-        .chart-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
         }
 
         .section-title {
@@ -336,6 +331,7 @@
                 <button class="btn btn-primary" onclick="switchTab('dashboard')">Dashboard</button>
                 <button class="btn btn-primary" onclick="switchTab('editor')">Editor</button>
                 <button class="btn btn-primary" onclick="switchTab('manual-add')">Añadir Nueva</button>
+                <button class="btn btn-success" onclick="fetchSheetData()" style="background-color: var(--secondary-color);">🔄 Sincronizar Datos</button>
             </div>
         </div>
     </nav>
@@ -343,7 +339,7 @@
     <header>
         <div class="container">
             <h1>📋 Sistema de Gestión de Especificaciones</h1>
-            <p>Conectado en Tiempo Real con Google Sheets</p>
+            <p>Conectado de forma Manual y Segura con Google Sheets</p>
             <div style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.95;">
                 <span id="fecha-generacion"></span> | 
                 <span>Última sincronización: <span id="ultima-modificacion">Nunca</span></span>
@@ -491,10 +487,10 @@
         </div>
     </div>
 
-<script>
+    <script>
         // CONFIGURACIÓN CLOUD - GOOGLE SHEETS
         // Reemplaza esta URL con la de tu Web App desplegada en Apps Script
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzG3PROrh8OZuP-x4llPCc8TZMSo7fV6qUaDggQoL-2jGs2yp3oud4JqxbCumlpCXFReg/exec';
+        const WEB_APP_URL = 'ESCRIBE_AQUI_TU_URL_DE_APPS_SCRIPT';
 
         let statusChartInstance = null;
         let complianceChartInstance = null;
@@ -542,6 +538,7 @@
                 });
                 
                 showAlert("¡Cambio sincronizado en Google Sheets!");
+                // Forzar sincronización inmediata solo tras edición propia
                 setTimeout(fetchSheetData, 1000);
             } catch (error) {
                 console.error("Error escribiendo en Sheet:", error);
@@ -583,7 +580,7 @@
             });
         }
 
-        // 1. FUNCIÓN CORREGIDA PARA DETECTAR PENDIENTES
+        // CONTROL DE PENDIENTES MEJORADO (Insensible a mayúsculas o espacios)
         function updateDashboard() {
             const items = appData.items;
             
@@ -631,7 +628,7 @@
             });
         }
 
-        // 2. FUNCIÓN CORREGIDA PARA DETECTAR PENDIENTES POR CATEGORÍA
+        // FILTRO DE PENDIENTES POR CATEGORÍA
         function updateSummaryTable() {
             const tbody = document.getElementById('summaryTable');
             tbody.innerHTML = '';
@@ -655,7 +652,7 @@
             });
         }
 
-        // 3. FUNCIÓN CORREGIDA PARA RENDERIZAR BADGES CORRECTAMENTE
+        // RENDERIZADO VISUAL DE BADGES CORREGIDO
         function renderTreeView() {
             const container = document.getElementById('categoryTree');
             container.innerHTML = '';
@@ -767,14 +764,15 @@
             }
         }
 
+        // INICIALIZACIÓN DE LA PÁGINA
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('fecha-generacion').textContent = 'Hoy: ' + new Date().toLocaleDateString('es-CO');
+            
+            // Carga de datos inicial controlada
             fetchSheetData();
             
-            // Auto-refresco en segundo plano cada 30 segundos
-            setInterval(fetchSheetData, 30000);
+            // SIN TEMPORIZADOR AUTOMÁTICO: El sistema ahora es 100% manual para proteger tus sesiones de edición.
         });
-    </script>   
-
+    </script>
 </body>
 </html>
