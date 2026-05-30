@@ -506,25 +506,31 @@
 
         // Fetch de Datos desde el Sheet
         async function fetchSheetData() {
-            showLoading(true);
-            try {
-                const response = await fetch(`${WEB_APP_URL}?action=read`);
-                const data = await response.json();
-                appData.items = data;
-                
-                document.getElementById('ultima-modificacion').textContent = new Date().toLocaleTimeString('es-CO');
-                populateSelects();
-                updateDashboard();
-                if(document.getElementById('editor').style.display !== 'none') {
-                    renderTreeView();
-                }
-            } catch (error) {
-                console.error("Error leyendo Google Sheets:", error);
-                showAlert("Error al conectar con Google Sheets", "error");
-            } finally {
-                showLoading(false);
-            }
+    showLoading(true);
+    try {
+        // Añadimos un parámetro de tiempo (?_=${Date.now()}) para evitar que el navegador guarde en caché la respuesta de Google
+        const response = await fetch(`${WEB_APP_URL}?action=read&_=${Date.now()}`);
+        const data = await response.json();
+        
+        // ELIMINAMOS cualquier rastro de datos locales antiguos que puedan causar conflicto
+        localStorage.removeItem('appData');
+        
+        appData.items = data.items || [];
+        appData.categories = data.categories || ['General']; 
+        
+        document.getElementById('ultima-modificacion').textContent = new Date().toLocaleTimeString('es-CO');
+        populateSelects();
+        updateDashboard();
+        if(document.getElementById('editor').style.display !== 'none') {
+            renderTreeView();
         }
+    } catch (error) {
+        console.error("Error leyendo Google Sheets:", error);
+        showAlert("Error al conectar con Google Sheets", "error");
+    } finally {
+        showLoading(false);
+    }
+}
 
         // Enviar datos hacia el Sheet
         async function sendDataToSheet(action, payload) {
