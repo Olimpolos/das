@@ -491,7 +491,7 @@
         </div>
     </div>
 
-    <script>
+<script>
         // CONFIGURACIÓN CLOUD - GOOGLE SHEETS
         // Reemplaza esta URL con la de tu Web App desplegada en Apps Script
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzG3PROrh8OZuP-x4llPCc8TZMSo7fV6qUaDggQoL-2jGs2yp3oud4JqxbCumlpCXFReg/exec';
@@ -536,13 +536,12 @@
             try {
                 const response = await fetch(WEB_APP_URL, {
                     method: 'POST',
-                    mode: 'no-cors', // Evita problemas de redirección CORS con Apps Script
+                    mode: 'no-cors', 
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: action, data: payload })
                 });
                 
                 showAlert("¡Cambio sincronizado en Google Sheets!");
-                // Forzar recarga limpia después de guardar para validar datos reales
                 setTimeout(fetchSheetData, 1000);
             } catch (error) {
                 console.error("Error escribiendo en Sheet:", error);
@@ -584,10 +583,13 @@
             });
         }
 
+        // 1. FUNCIÓN CORREGIDA PARA DETECTAR PENDIENTES
         function updateDashboard() {
             const items = appData.items;
-            const ok = items.filter(i => i.status === 'ok').length;
-            const pending = items.filter(i => i.status === 'pendiente').length;
+            
+            const ok = items.filter(i => i.status && i.status.toString().toLowerCase().trim() === 'ok').length;
+            const pending = items.filter(i => i.status && i.status.toString().toLowerCase().trim() === 'pendiente').length;
+            
             const total = items.length;
             const pct = total > 0 ? Math.round((ok / total) * 100) : 0;
 
@@ -629,6 +631,7 @@
             });
         }
 
+        // 2. FUNCIÓN CORREGIDA PARA DETECTAR PENDIENTES POR CATEGORÍA
         function updateSummaryTable() {
             const tbody = document.getElementById('summaryTable');
             tbody.innerHTML = '';
@@ -641,15 +644,18 @@
 
             cats.forEach(cat => {
                 const catItems = appData.items.filter(i => i.category === cat);
-                const ok = catItems.filter(i => i.status === 'ok').length;
-                const pending = catItems.filter(i => i.status === 'pendiente').length;
+                
+                const ok = catItems.filter(i => i.status && i.status.toString().toLowerCase().trim() === 'ok').length;
+                const pending = catItems.filter(i => i.status && i.status.toString().toLowerCase().trim() === 'pendiente').length;
+                
                 const total = catItems.length;
-                const pct = Math.round((ok / total) * 100);
+                const pct = total > 0 ? Math.round((ok / total) * 100) : 0;
 
                 tbody.innerHTML += `<tr><td><strong>${cat}</strong></td><td>${ok}</td><td>${pending}</td><td>${total}</td><td><strong>${pct}%</strong></td></tr>`;
             });
         }
 
+        // 3. FUNCIÓN CORREGIDA PARA RENDERIZAR BADGES CORRECTAMENTE
         function renderTreeView() {
             const container = document.getElementById('categoryTree');
             container.innerHTML = '';
@@ -657,17 +663,25 @@
 
             categories.forEach((category, idx) => {
                 const catItems = appData.items.filter(i => i.category === category);
-                const okCount = catItems.filter(i => i.status === 'ok').length;
-                const pendingCount = catItems.filter(i => i.status === 'pendiente').length;
+                
+                const okCount = catItems.filter(i => i.status && i.status.toString().toLowerCase().trim() === 'ok').length;
+                const pendingCount = catItems.filter(i => i.status && i.status.toString().toLowerCase().trim() === 'pendiente').length;
 
                 let itemsHtml = '';
                 catItems.forEach(item => {
+                    const currentStatus = (item.status || '').toString().toLowerCase().trim();
+                    const isOk = currentStatus === 'ok';
+
                     itemsHtml += `
-                        <div class="tree-item" data-id="${item.id}" data-desc="${item.description.toLowerCase()}" data-status="${item.status}">
+                        <div class="tree-item" data-id="${item.id}" data-desc="${item.description.toLowerCase()}" data-status="${currentStatus}">
                             <div>
                                 <div class="tree-item-id">ID: ${item.id}</div>
                                 <div>${item.description}</div>
-                                <div style="margin-top:0.3rem;"><span class="badge ${item.status === 'ok' ? 'badge-success' : 'badge-warning'}">${item.status.toUpperCase()}</span></div>
+                                <div style="margin-top:0.3rem;">
+                                    <span class="badge ${isOk ? 'badge-success' : 'badge-warning'}">
+                                        ${isOk ? '✓ OK' : '⏳ PENDIENTE'}
+                                    </span>
+                                </div>
                                 ${item.observation ? `<div style="font-style:italic; font-size:0.85rem; color:#64748b;">📝 ${item.observation}</div>` : ''}
                             </div>
                             <div class="tree-item-actions">
@@ -757,9 +771,10 @@
             document.getElementById('fecha-generacion').textContent = 'Hoy: ' + new Date().toLocaleDateString('es-CO');
             fetchSheetData();
             
-            // ACTUALIZACIÓN EN TIEMPO REAL AUTOMÁTICA: Consulta cambios cada 30 segundos de forma pasiva
+            // Auto-refresco en segundo plano cada 30 segundos
             setInterval(fetchSheetData, 30000);
         });
-    </script>
+    </script>   
+
 </body>
 </html>
